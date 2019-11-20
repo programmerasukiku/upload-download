@@ -87,7 +87,41 @@ if ($jam >= 0 && $jam <= 12) {
 $userfile = mysqli_query($conn, "SELECT SUM(ukuran) FROM files WHERE id_user = $id_user");
 $row = mysqli_fetch_assoc($userfile);
 $giga = 500000000;
-$percent = ($row['SUM(ukuran)'] / $giga) * 100;
+$size = $row['SUM(ukuran)'];
+$percent = ($size / $giga) * 100;
+
+//change color
+if ($percent <= 50) {
+    $color = 'success';
+} elseif ($percent > 50 && $percent <= 80) {
+    $color = 'warning';
+} else {
+    $color = 'danger';
+}
+
+
+// convert size
+function bytesToSize($bytes, $precision = 2)
+{
+    $kilobyte = 1024;
+    $megabyte = $kilobyte * 1024;
+    $gigabyte = $megabyte * 1024;
+    $terabyte = $gigabyte * 1024;
+
+    if (($bytes >= 0) && ($bytes < $kilobyte)) {
+        return $bytes . ' B';
+    } elseif (($bytes >= $kilobyte) && ($bytes < $megabyte)) {
+        return round($bytes / $kilobyte, $precision) . ' KB';
+    } elseif (($bytes >= $megabyte) && ($bytes < $gigabyte)) {
+        return round($bytes / $megabyte, $precision) . ' MB';
+    } elseif (($bytes >= $gigabyte) && ($bytes < $terabyte)) {
+        return round($bytes / $gigabyte, $precision) . ' GB';
+    } elseif ($bytes >= $terabyte) {
+        return round($bytes / $terabyte, $precision) . ' TB';
+    } else {
+        return $bytes . ' B';
+    }
+}
 ?>
 
 <!doctype html>
@@ -174,9 +208,9 @@ $percent = ($row['SUM(ukuran)'] / $giga) * 100;
             <div class="col">
                 <h2>Storage</h2>
                 <div class="progress">
-                    <div class="progress-bar bg-warning" role="progressbar" style="width: <?= $percent; ?>%" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100"></div>
+                    <div class="progress-bar bg-<?= $color; ?>" role="progressbar" style="width: <?= $percent; ?>%" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100"></div>
                 </div>
-                <p>Your storage = <?= $percent; ?> / 500 MB</p>
+                <p>Your storage = <?= bytesToSize($size); ?> / 500 MB</p>
             </div>
         </div>
     </div>

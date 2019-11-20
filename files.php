@@ -174,10 +174,12 @@ function bytesToSize($bytes, $precision = 2)
                         <td><?= bytesToSize($q['ukuran']) ?></td>
                         <td><?= $q['tipe'] ?></td>
                         <td>
-                            <a href="uploads/<?= $q['namafile'] ?>">
+                            <a href="uploads/<?= $q['namafile'] ?>" download>
                                 <button class="btn btn-success">Download</button>
                             </a>
-                            <button class="btn btn-danger">Delete</button>
+                            <a href="delete.php?id=<?= $q['id']; ?>">
+                                <button class="btn btn-danger" onclick="return confirm('Are you sure?')" ;>Delete</button>
+                            </a>
                         </td>
                     </tr>
 

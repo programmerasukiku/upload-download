@@ -13,12 +13,6 @@ if (isset($_POST['submit'])) {
 	$tmpname  = $_FILES['foto']['tmp_name'];
 	$_SESSION['tempnama'] = $nama;
 	$_SESSION['tempusername'] = $username;
-	//checking gambar
-	if ($error === 4) {
-		header("Location: register.php?error=g");
-		exit;
-		return false;
-	}
 
 	//checking ekstensi file
 	$ekstensi = ['jpg', 'jpeg', 'png'];
@@ -93,14 +87,7 @@ if (isset($_POST['submit'])) {
 		<?php
 		if (isset($_GET['error'])) {
 			$e = $_GET['error'];
-			if ($e == "g") {
-				echo '<div class="alert alert-warning alert-dismissible fade show" role="alert">
-                    <strong>Please input a photo!</strong>
-                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                    </button>
-                  </div>';
-			} else if ($e == "u") {
+			if ($e == "u") {
 				echo '<div class="alert alert-warning alert-dismissible fade show" role="alert">
                     <strong>Username unavailable!</strong> Choose another username.
                     <button type="button" class="close" data-dismiss="alert" aria-label="Close">
@@ -132,7 +119,7 @@ if (isset($_POST['submit'])) {
 					</div>
 					<div class="form-group">
 						<label for="foto">Foto</label>
-						<input type="file" class="form-control-file" id="foto" name="foto" accept="image/jpg, image/jpeg, image/png" />
+						<input type="file" class="form-control-file" id="foto" name="foto" accept="image/jpg, image/jpeg, image/png" required>
 					</div>
 					<div class="form-group">
 						<label for="password">Password</label>
