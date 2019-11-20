@@ -5,15 +5,18 @@ include_once 'config/koneksi.php';
 // cek tombol register jalan/tidak
 if (isset($_POST['submit'])) {
 	$nama = $_POST['nama'];
+	// membersihkan slash, give text lowercase pada username
+	$username = strtolower(stripcslashes($_POST['username']));
 	$foto 	  = $_FILES['foto']['name'];
 	$sizefile = $_FILES['foto']['size'];
 	$error    = $_FILES['foto']['error'];
 	$tmpname  = $_FILES['foto']['tmp_name'];
+	$_SESSION['tempnama'] = $nama;
+	$_SESSION['tempusername'] = $username;
 	//checking gambar
 	if ($error === 4) {
-		echo "<script>
-                alert ('Isikan gambar terlebih dahulu')
-                </script>";
+		header("Location: register.php?error=g");
+		exit;
 		return false;
 	}
 
@@ -34,22 +37,18 @@ if (isset($_POST['submit'])) {
 	//gambar siap diupload
 	move_uploaded_file($tmpname, 'profile/' . $newfoto);
 
-	// membersihkan slash, give text lowercase pada username
-	$username = strtolower(stripcslashes($_POST['username']));
 	// give tanda"" agar password safety
 	$password = mysqli_real_escape_string($conn, $_POST['password']);
 	$confpass = mysqli_real_escape_string($conn, $_POST['confpass']);
 	$tgl    = date("Y-m-d");
 	$result = mysqli_query($conn, "SELECT*FROM users WHERE username='$username'");
 
-
 	// cek apakah form telah diisi semua
 	if ($username and $password and $confpass) {
 		// cek apakah username sudah ada/belum
 		if ($cek = mysqli_num_rows($result)) {
-			echo "<script> alert('Username sudah terdaftar, Ulangi!');
-				</script>";
-			return false;
+			header("Location: register.php?error=u");
+			exit;
 		}
 
 		// konfirmasi password
@@ -58,7 +57,8 @@ if (isset($_POST['submit'])) {
 			$query = mysqli_query($conn, "INSERT INTO users VALUES ('','$nama','$newfoto','$username', '$password', '$tgl', '')");
 			header("Location: login.php?registrasi-sukses");
 		} else
-			header("Location: register.php?konfirmasipassword-failed");
+			header("Location: register.php?error=p");
+		exit;
 	}
 
 	// jika form tidak terisi semua
@@ -88,37 +88,62 @@ if (isset($_POST['submit'])) {
 </head>
 
 <body>
-	<div class="jumbotron jumbotron-fluid">
-		<div class="container">
-			<h3 align="center">SIGN-UP</h3>
-			<div class="row">
-				<div class="col-md-4"></div>
-				<div class="col-md-4">
+	<div class="container">
+		<h3 align="center">SIGN-UP</h3>
+		<?php
+		if (isset($_GET['error'])) {
+			$e = $_GET['error'];
+			if ($e == "g") {
+				echo '<div class="alert alert-warning alert-dismissible fade show" role="alert">
+                    <strong>Please input a photo!</strong>
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                    </button>
+                  </div>';
+			} else if ($e == "u") {
+				echo '<div class="alert alert-warning alert-dismissible fade show" role="alert">
+                    <strong>Username unavailable!</strong> Choose another username.
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                    </button>
+                  </div>';
+			} else if ($e == "p") {
+				echo '<div class="alert alert-warning alert-dismissible fade show" role="alert">
+                    <strong>Password mismatch!</strong> You should input same password.
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                    </button>
+				  </div>';
+			}
+		}
+		?>
+		<div class="row">
+			<div class="col-md-4"></div>
+			<div class="col-md-4">
 
-					<form action="" method="post" enctype="multipart/form-data">
-						<div class="form-group">
-							<label for="username">Nama</label>
-							<input type="text" name="nama" class="form-control">
-						</div>
-						<div class="form-group">
-							<label for="username">Username</label>
-							<input type="text" name="username" class="form-control">
-						</div>
-						<div class="form-group">
-							<label for="foto">Foto</label>
-							<input type="file" name="foto" accept="image/*" class="form-control">
-						</div>
-						<div class="form-group">
-							<label for="password">Password</label>
-							<input type="password" name="password" class="form-control">
-						</div>
-						<div class="form-group">
-							<label for="confpass">Konfirmasi Password</label>
-							<input type="password" name="confpass" class="form-control">
-						</div>
-						<button type="submit" class="btn btn-primary" name="submit">Submit</button>
-					</form>
-				</div>
+				<form action="" method="post" enctype="multipart/form-data">
+					<div class="form-group">
+						<label for="username">Nama</label>
+						<input type="text" name="nama" id="nama" class="form-control" value="<?php if (isset($_SESSION['tempnama'])) echo $_SESSION['tempnama']; ?>" required>
+					</div>
+					<div class="form-group">
+						<label for="username">Username</label>
+						<input type="text" name="username" id="username" class="form-control" value="<?php if (isset($_SESSION['tempusername'])) echo $_SESSION['tempusername']; ?>" required>
+					</div>
+					<div class="form-group">
+						<label for="foto">Foto</label>
+						<input type="file" class="form-control-file" id="foto" name="foto" accept="image/jpg, image/jpeg, image/png" />
+					</div>
+					<div class="form-group">
+						<label for="password">Password</label>
+						<input type="password" name="password" id="password" class="form-control" required>
+					</div>
+					<div class="form-group">
+						<label for="confpass">Konfirmasi Password</label>
+						<input type="password" name="confpass" id="confpass" class="form-control" required>
+					</div>
+					<button type="submit" class="btn btn-primary" name="submit">Submit</button>
+				</form>
 			</div>
 		</div>
 	</div>

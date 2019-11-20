@@ -1,13 +1,22 @@
 <?php
 session_start();
-$id = $_SESSION['id_user'];
+require "config/login.php";
+$id_user = $_SESSION['id_user'];
 require "config/koneksi.php";
-$query = mysqli_query($conn, "SELECT*FROM files WHERE id_user = $id");
+$query = mysqli_query($conn, "SELECT*FROM files WHERE id_user = $id_user");
+
+$queryselect = "SELECT * FROM users WHERE id = $id_user";
+$result = mysqli_query($conn, $queryselect);
+$row = mysqli_fetch_assoc($result);
+$user = $row['nama'];
+$username = $row['username'];
+$fotolama = $row['foto'];
+$tgl = $row['tgl_reg'];
+
 $i = 0;
 
 define("UPLOAD_DIR", "uploads/");
 if (!empty($_FILES['myfile'])) {
-    $id_user = $_SESSION['id_user'];
     $namafile = $_FILES['myfile']['name'];
     $size = $_FILES['myfile']['size'];
     $date = date("Y-m-d");
@@ -28,6 +37,42 @@ if (!empty($_FILES['myfile'])) {
     $tmpname = $_FILES['myfile']['tmp_name'];
     $upload = move_uploaded_file($tmpname, UPLOAD_DIR . $nama);
     $insert = mysqli_query($conn, "INSERT INTO files VALUES ('', '$date', '$nama', '$size', '$extension', '$id_user')");
+    echo "<meta http-equiv='refresh' content='0'>";
+}
+
+//Edit/ Update data user
+if (isset($_POST['update'])) {
+    $nama = $_POST['nama'];
+    $username = $_POST['username'];
+    $foto     = $_FILES['foto-update']['name'];
+    $tmpname  = $_FILES['foto-update']['tmp_name'];
+    if ($_FILES['foto-update']['error'] === 4) {
+        $newfoto = $fotolama;
+    } else {
+        $ekstensi = ['jpg', 'jpeg', 'png'];
+        $ektensigambar = explode('.', $foto);
+        unlink('profile' . DIRECTORY_SEPARATOR . $fotolama);
+        $ektensigambar = strtolower(end($ektensigambar));
+        if (!in_array($ektensigambar, $ekstensi)) {
+            echo "error";
+            die;
+            return false;
+        }
+        //generate nama gambar baru
+        $newfoto = uniqid();
+        $newfoto .= '.';
+        $newfoto .= $ektensigambar;
+        //gambar siap diupload
+        move_uploaded_file($tmpname, 'profile/' . $newfoto);
+    }
+    $queryupdate = "UPDATE users SET
+                    nama = '$nama',
+                    foto = '$newfoto',
+                    username = '$username'
+                    WHERE id = '$id_user'
+                    ";
+    mysqli_query($conn, $queryupdate);
+    echo "<meta http-equiv='refresh' content='0'>";
 }
 
 // convert size
@@ -86,13 +131,22 @@ function bytesToSize($bytes, $precision = 2)
         </div>
         <div class="navbar-nav">
             <div class="mr-2">
-                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#mymodal">
+                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modalfile">
                     <i class="fas fa-upload"></i>
                 </button>
             </div>
-            <button type="button" class="btn btn-danger">
-                <i class="fas fa-sign-out-alt"></i>
-            </button>
+            <div class="mr-2">
+                <button type="button" class="btn btn-warning text-white" data-toggle="modal" data-target="#modaledit">
+                    <i class="fas fa-edit"></i>
+                </button>
+            </div>
+            <div>
+                <a href="logout.php">
+                    <button type="button" class="btn btn-danger">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                </a>
+            </div>
         </div>
     </nav>
     <!-- end navbar -->
@@ -131,9 +185,9 @@ function bytesToSize($bytes, $precision = 2)
         </table>
     </div>
     <!-- end Table files -->
-    <!-- Modal box -->
-    <!-- Modal box -->
-    <div class="modal" id="mymodal" tabindex="-1" role="dialog">
+
+    <!-- Modal box files -->
+    <div class="modal" id="modalfile" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
@@ -154,8 +208,42 @@ function bytesToSize($bytes, $precision = 2)
             </div>
         </div>
     </div>
-    <!-- end Modal box -->
-    <!-- end Modal box -->
+    <!-- end Modal box files -->
+
+    <!-- Modal box edit -->
+    <div class="modal" id="modaledit" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form action="" method="post" enctype="multipart/form-data">
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="username">Nama</label>
+                            <input type="text" name="nama" id="nama" class="form-control" value="<?= $user; ?>">
+                        </div>
+                        <div class="form-group">
+                            <label for="username">Username</label>
+                            <input type="text" name="username" id="username" class="form-control" value="<?= $username; ?>">
+                        </div>
+                        <div class="form-group">
+                            <label for="foto">Foto</label>
+                            <input type="file" class="form-control-file" id="foto" name="foto-update" accept="image/jpg, image/jpeg, image/png" />
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button type="submit" name="update" class="btn btn-primary">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- end Modal box edit -->
     <!-- Optional JavaScript -->
     <!-- jQuery first, then Popper.js, then Bootstrap JS -->
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>

@@ -8,24 +8,17 @@ if (isset($_POST['login'])) {
 	// membersihkan slash, give text lowercase pada username
 	$username = $_POST['username'];
 	$password = $_POST['password'];
-	$result = mysqli_query($conn, "SELECT*FROM users WHERE username='$username' AND password='$password'");
+	$result = mysqli_query($conn, "SELECT*FROM users WHERE username='$username'");
 
 	// cek ada/tidak username dalam db
 	if (mysqli_num_rows($result) > 0) {
 		$row = mysqli_fetch_assoc($result);
 		$id = $row['id'];
-		$name = $row['nama'];
-		$pic = $row['foto'];
-		$tgl = $row['tgl_reg'];
 
-		if (password_verify($password, $row["password"])) {
-			$_SESSION['name'] = $name;
-			$_SESSION['foto'] = $pic;
-			$_SESSION['tgl'] = $tgl;
+		if (password_verify($password, $row['password'])) {
 			$_SESSION['id_user'] = $id;
-			$_SESSION['username'] = $username;
 			$_SESSION['login'] = true;
-			header("Location: profile.php?Login-sukses!");
+			header("Location: profile.php");
 		}
 	}
 	$error = true;
@@ -49,34 +42,46 @@ if (isset($_POST['login'])) {
 </head>
 
 <body>
-	<div class="jumbotron jumbotron-fluid">
-		<div class="container">
-			<h3 align="center">LOGIN</h3>
-			<div class="row">
-				<div class="col-md-4"></div>
-				<div class="col-md-4">
-
-					<!-- jika username/password tidak sesuai db -->
-					<?php if (isset($error)) : ?>
-						<p style="color: red;">username/password anda salah</p>
-					<?php endif; ?>
-
-					<form action="" method="post">
-						<div class="form-group">
-							<label for="username">Username</label>
-							<input type="text" name="username" class="form-control">
-						</div>
-
-						<div class="form-group">
-							<label for="password">Password</label>
-							<input type="password" name="password" class="form-control">
-						</div>
-						<input type="submit" name="login" class="btn btn-dark" value="Login">
-					</form>
-				</div>
+	<!-- Navbar -->
+	<nav class="navbar navbar-expand-lg navbar-light bg-light">
+		<a class="navbar-brand" href="#">Drive</a>
+		<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
+			<span class="navbar-toggler-icon"></span>
+		</button>
+		<div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+			<div class="navbar-nav">
+				<!-- <a class="nav-item nav-link" href="#">Pricing</a> -->
+				<button type="button" class="btn btn-primary mr-2">Sign Up</button>
+				<button type="button" class="btn btn-outline-primary">Sign In</button>
 			</div>
-			<div class="tombol" align="right">
-				<a href="register.php" class="btn btn-dark">Sign-up</a>
+		</div>
+	</nav>
+	<!-- end Navbar -->
+
+	<div class="container">
+		<h3 class="text-center">LOGIN</h3>
+		<div class="row">
+			<div class="col-md-4"></div>
+			<div class="col-md-4">
+
+				<!-- jika username/password tidak sesuai db -->
+				<?php if (isset($error)) : ?>
+					<p style="color: red;">username/password anda salah</p>
+				<?php endif; ?>
+
+				<form action="" method="post">
+					<div class="form-group">
+						<label for="username">Username</label>
+						<input type="text" name="username" class="form-control">
+					</div>
+
+					<div class="form-group">
+						<label for="password">Password</label>
+						<input type="password" name="password" class="form-control">
+					</div>
+					<input type="submit" name="login" class="btn btn-dark" value="Login">
+					<a href="register.php" class="btn btn-primary float-right">Sign Up</a>
+				</form>
 			</div>
 		</div>
 	</div>
