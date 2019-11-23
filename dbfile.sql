@@ -49,7 +49,7 @@ CREATE TABLE `users` (
   `foto` varchar(50) NOT NULL,
   `username` varchar(128) NOT NULL,
   `password` varchar(256) NOT NULL,
-  `tgl_reg` date NOT NULL,
+  `tgl_reg` timestamp NOT NULL,
   `level` varchar(5) NOT NULL DEFAULT 'user'
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
