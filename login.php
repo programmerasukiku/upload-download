@@ -44,15 +44,19 @@ if (isset($_POST['login'])) {
 <body>
 	<!-- Navbar -->
 	<nav class="navbar navbar-expand-lg navbar-light bg-light">
-		<a class="navbar-brand" href="#">Drive</a>
+		<a class="navbar-brand" href="index.php">Drive</a>
 		<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
 			<span class="navbar-toggler-icon"></span>
 		</button>
 		<div class="collapse navbar-collapse" id="navbarNavAltMarkup">
 			<div class="navbar-nav">
 				<!-- <a class="nav-item nav-link" href="#">Pricing</a> -->
-				<button type="button" class="btn btn-primary mr-2">Sign Up</button>
-				<button type="button" class="btn btn-outline-primary">Sign In</button>
+				<a href="register.php">
+					<button type="button" class="btn btn-outline-primary mr-2">Sign Up</button>
+				</a>
+				<a href="login.php">
+					<button type="button" class="btn btn-outline-primary active">Sign In</button>
+				</a>
 			</div>
 		</div>
 	</nav>
@@ -66,18 +70,23 @@ if (isset($_POST['login'])) {
 
 				<!-- jika username/password tidak sesuai db -->
 				<?php if (isset($error)) : ?>
-					<p style="color: red;">username/password anda salah</p>
+					<div class="alert alert-danger alert-dismissible fade show" role="alert">
+						<strong>Error!</strong> Username / Password is wrong
+						<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+							<span aria-hidden="true">&times;</span>
+						</button>
+					</div>
 				<?php endif; ?>
 
 				<form action="" method="post">
 					<div class="form-group">
 						<label for="username">Username</label>
-						<input type="text" name="username" class="form-control">
+						<input type="text" name="username" class="form-control" required>
 					</div>
 
 					<div class="form-group">
 						<label for="password">Password</label>
-						<input type="password" name="password" class="form-control">
+						<input type="password" name="password" class="form-control" required>
 					</div>
 					<input type="submit" name="login" class="btn btn-dark" value="Login">
 					<a href="register.php" class="btn btn-primary float-right">Sign Up</a>

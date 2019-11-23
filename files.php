@@ -3,8 +3,8 @@ session_start();
 require "config/login.php";
 $id_user = $_SESSION['id_user'];
 require "config/koneksi.php";
+date_default_timezone_set("Asia/Jakarta");
 $query = mysqli_query($conn, "SELECT*FROM files WHERE id_user = $id_user");
-
 $queryselect = "SELECT * FROM users WHERE id = $id_user";
 $result = mysqli_query($conn, $queryselect);
 $row = mysqli_fetch_assoc($result);
@@ -14,30 +14,44 @@ $fotolama = $row['foto'];
 $tgl = $row['tgl_reg'];
 
 $i = 0;
+//Total isi drive
+$userfile = mysqli_query($conn, "SELECT SUM(ukuran) FROM files WHERE id_user = $id_user");
+$row = mysqli_fetch_assoc($userfile);
+$giga = 500000000;
+$sizefiles = $row['SUM(ukuran)'];
 
 define("UPLOAD_DIR", "uploads/");
 if (!empty($_FILES['myfile'])) {
     $namafile = $_FILES['myfile']['name'];
     $size = $_FILES['myfile']['size'];
-    $date = date("Y-m-d");
+    $date = date("Y-m-d H:i:s");
     $extension = pathinfo($namafile, PATHINFO_EXTENSION);
+    if ($size + $sizefiles > $giga) {
+        $notenough = '<div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <strong>Storage is not enough!</strong> You should delete some files
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    </div>';
+    } else {
+        // filename yang aman
+        $nama = preg_replace("/[^A-Z0-9._-]/i", "_", $namafile);
 
-    // filename yang aman
-    $nama = preg_replace("/[^A-Z0-9._-]/i", "_", $namafile);
+        // Mencegah overwrite
+        $i = 0;
+        //pathinfo() =  mengembalikan nilai berupa array yang berisi informasi path dari suatu link
+        $parts = pathinfo($nama);
+        while (file_exists(UPLOAD_DIR . $nama)) {
+            $i++;
+            $nama = $parts['filename'] . "-" . $i . "." . $parts['extension'];
+        }
 
-    // Mencegah overwrite
-    $i = 0;
-    $parts = pathinfo($nama);
-    while (file_exists(UPLOAD_DIR . $nama)) {
-        $i++;
-        $nama = $parts["filename"] . "-" . $i . "." . $parts['extension'];
+        // uploading
+        $tmpname = $_FILES['myfile']['tmp_name'];
+        $upload = move_uploaded_file($tmpname, UPLOAD_DIR . $nama);
+        $insert = mysqli_query($conn, "INSERT INTO files VALUES ('', '$date', '$nama', '$size', '$extension', '$id_user')");
+        echo "<meta http-equiv='refresh' content='0'>";
     }
-
-    // uploading
-    $tmpname = $_FILES['myfile']['tmp_name'];
-    $upload = move_uploaded_file($tmpname, UPLOAD_DIR . $nama);
-    $insert = mysqli_query($conn, "INSERT INTO files VALUES ('', '$date', '$nama', '$size', '$extension', '$id_user')");
-    echo "<meta http-equiv='refresh' content='0'>";
 }
 
 //Edit/ Update data user
@@ -97,6 +111,55 @@ function bytesToSize($bytes, $precision = 2)
         return $bytes . ' B';
     }
 }
+
+//Time ago
+function timeago($waktu_upload)
+{
+    $waktu_yang_lalu = strtotime($waktu_upload);
+    $waktu_sekarang  = time();
+    $perbedaan_waktu = $waktu_sekarang - $waktu_yang_lalu;
+    $seconds = $perbedaan_waktu;
+    $minutes = round($seconds / 60);
+    $hours   = round($seconds / 3600);
+    $days    = round($seconds / 86400);
+    $weeks   = round($seconds / 604800);
+    $months  = round($seconds / 2419200);
+
+    if ($seconds < 60) {
+        return "$seconds seconds ago";
+    } elseif ($minutes < 60) {
+        if ($minutes == 1) {
+            return "A minutes ago";
+        } else {
+            return "$minutes minutes ago";
+        }
+    } elseif ($hours <= 24) {
+        if ($hours == 1) {
+            return "An hour ago";
+        } else {
+            return "$hours hours ago";
+        }
+    } elseif ($days < 7) {
+        if ($days == 1) {
+            return "Yesterday";
+        } else {
+            return "$days days ago";
+        }
+    } elseif ($weeks < 4) {
+        if ($weeks == 1) {
+            return "Last week";
+        } else {
+            return "$weeks weeks ago";
+        }
+    } else {
+        if ($months == 1) {
+            return "Last month";
+        } else {
+            return "$months months ago";
+        }
+    }
+}
+
 ?>
 <!doctype html>
 <html lang="en">
@@ -153,6 +216,7 @@ function bytesToSize($bytes, $precision = 2)
 
     <!-- Table files -->
     <div class="container">
+        <?php if (!empty($_FILES["myfile"])) echo $notenough; ?>
         <h1>Manage Your Files</h1>
         <table class="table table-hover mt-2">
             <thead class="thead-dark">
@@ -170,7 +234,7 @@ function bytesToSize($bytes, $precision = 2)
                     <tr>
                         <th><?= ++$i; ?></th>
                         <td><?= $q['namafile'] ?></td>
-                        <td><?= $q['tgl_upload'] ?></td>
+                        <td><?= timeago($q['tgl_upload']) ?></td>
                         <td><?= bytesToSize($q['ukuran']) ?></td>
                         <td><?= $q['tipe'] ?></td>
                         <td>

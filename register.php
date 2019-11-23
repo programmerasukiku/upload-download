@@ -82,32 +82,49 @@ if (isset($_POST['submit'])) {
 </head>
 
 <body>
-	<div class="container">
-		<h3 align="center">SIGN-UP</h3>
-		<?php
-		if (isset($_GET['error'])) {
-			$e = $_GET['error'];
-			if ($e == "u") {
-				echo '<div class="alert alert-warning alert-dismissible fade show" role="alert">
-                    <strong>Username unavailable!</strong> Choose another username.
-                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                    </button>
-                  </div>';
-			} else if ($e == "p") {
-				echo '<div class="alert alert-warning alert-dismissible fade show" role="alert">
-                    <strong>Password mismatch!</strong> You should input same password.
-                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                    </button>
-				  </div>';
-			}
+	<?php
+	if (isset($_GET['error'])) {
+		$e = $_GET['error'];
+		if ($e == "u") {
+			echo '<div class="alert alert-warning alert-dismissible fade show" role="alert">
+				<strong>Username unavailable!</strong> Choose another username.
+				<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+				<span aria-hidden="true">&times;</span>
+				</button>
+				</div>';
+		} else if ($e == "p") {
+			echo '<div class="alert alert-warning alert-dismissible fade show" role="alert">
+				<strong>Password mismatch!</strong> You should input same password.
+				<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+				<span aria-hidden="true">&times;</span>
+				</button>
+				</div>';
 		}
-		?>
-		<div class="row">
-			<div class="col-md-4"></div>
-			<div class="col-md-4">
-
+	}
+	?>
+	<!-- Navbar -->
+	<nav class="navbar navbar-expand-lg navbar-light bg-light">
+		<a class="navbar-brand" href="index.php">Drive</a>
+		<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
+			<span class="navbar-toggler-icon"></span>
+		</button>
+		<div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+			<div class="navbar-nav">
+				<!-- <a class="nav-item nav-link" href="#">Pricing</a> -->
+				<a href="register.php">
+					<button type="button" class="btn btn-outline-primary mr-2 active">Sign Up</button>
+				</a>
+				<a href="login.php">
+					<button type="button" class="btn btn-outline-primary">Sign In</button>
+				</a>
+			</div>
+		</div>
+	</nav>
+	<!-- end Navbar -->
+	<div class="container">
+		<div class="row  justify-content-center align-items-center">
+			<div class="col-6 mt-4">
+				<h3>Register</h3>
 				<form action="" method="post" enctype="multipart/form-data">
 					<div class="form-group">
 						<label for="username">Nama</label>

@@ -1,9 +1,30 @@
 <?php
 session_start();
-// require "config/login.php";
+require "config/login.php";
 require "config/koneksi.php";
-define("UPLOAD_DIR", "uploads/");
 $id_user = $_SESSION['id_user'];
+
+// Time
+date_default_timezone_set("Asia/Jakarta");
+$t = time();
+// G = 24-hour format of an hour without leading zeros
+$jam = date("G", $t);
+if ($jam >= 0 && $jam <= 12) {
+    $waktu = "Good Morning";
+} elseif ($jam > 12 && $jam <= 5) {
+    $waktu = "Good Afternoon";
+} else {
+    $waktu = "Good Evening";
+}
+
+//Total isi drive
+$userfile = mysqli_query($conn, "SELECT SUM(ukuran) FROM files WHERE id_user = $id_user");
+$row = mysqli_fetch_assoc($userfile);
+$giga = 500000000;
+$sizefiles = $row['SUM(ukuran)'];
+$percent = ($sizefiles / $giga) * 100;
+
+define("UPLOAD_DIR", "uploads/");
 $queryselect = "SELECT * FROM users WHERE id = $id_user";
 $result = mysqli_query($conn, $queryselect);
 $row = mysqli_fetch_assoc($result);
@@ -11,28 +32,39 @@ $user = $row['nama'];
 $username = $row['username'];
 $fotolama = $row['foto'];
 $tgl = $row['tgl_reg'];
+
+//uploading
 if (!empty($_FILES['myfile'])) {
     $namafile = $_FILES['myfile']['name'];
     $size = $_FILES['myfile']['size'];
-    $date = date("Y-m-d");
+    $date = date("Y-m-d H:i:s");
     $extension = pathinfo($namafile, PATHINFO_EXTENSION);
+    if ($size + $sizefiles > $giga) {
+        $notenough = '<div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <strong>Storage is not enough!</strong> You should delete some files
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    </div>';
+    } else {
+        // filename yang aman
+        $nama = preg_replace("/[^A-Z0-9._-]/i", "_", $namafile);
 
-    // filename yang aman
-    $nama = preg_replace("/[^A-Z0-9._-]/i", "_", $namafile);
+        // Mencegah overwrite
+        $i = 0;
+        //pathinfo() =  mengembalikan nilai berupa array yang berisi informasi path dari suatu link
+        $parts = pathinfo($nama);
+        while (file_exists(UPLOAD_DIR . $nama)) {
+            $i++;
+            $nama = $parts['filename'] . "-" . $i . "." . $parts['extension'];
+        }
 
-    // Mencegah overwrite
-    $i = 0;
-    $parts = pathinfo($nama);
-    while (file_exists(UPLOAD_DIR . $nama)) {
-        $i++;
-        $nama = $parts["filename"] . "-" . $i . "." . $parts['extension'];
+        // uploading
+        $tmpname = $_FILES['myfile']['tmp_name'];
+        $upload = move_uploaded_file($tmpname, UPLOAD_DIR . $nama);
+        $insert = mysqli_query($conn, "INSERT INTO files VALUES ('', '$date', '$nama', '$size', '$extension', '$id_user')");
+        echo "<meta http-equiv='refresh' content='0'>";
     }
-
-    // uploading
-    $tmpname = $_FILES['myfile']['tmp_name'];
-    $upload = move_uploaded_file($tmpname, UPLOAD_DIR . $nama);
-    $insert = mysqli_query($conn, "INSERT INTO files VALUES ('', '$date', '$nama', '$size', '$extension', '$id_user')");
-    echo "<meta http-equiv='refresh' content='0'>";
 }
 
 //Edit/ Update data user
@@ -70,26 +102,6 @@ if (isset($_POST['update'])) {
     echo "<meta http-equiv='refresh' content='0'>";
 }
 
-// Time
-date_default_timezone_set("Asia/Jakarta");
-$t = time();
-// G = 24-hour format of an hour without leading zeros
-$jam = date("G", $t);
-if ($jam >= 0 && $jam <= 12) {
-    $waktu = "Good Morning";
-} elseif ($jam > 12 && $jam <= 5) {
-    $waktu = "Good Afternoon";
-} else {
-    $waktu = "Good Evening";
-}
-
-//Total isi drive
-$userfile = mysqli_query($conn, "SELECT SUM(ukuran) FROM files WHERE id_user = $id_user");
-$row = mysqli_fetch_assoc($userfile);
-$giga = 500000000;
-$size = $row['SUM(ukuran)'];
-$percent = ($size / $giga) * 100;
-
 //change color
 if ($percent <= 50) {
     $color = 'success';
@@ -98,7 +110,6 @@ if ($percent <= 50) {
 } else {
     $color = 'danger';
 }
-
 
 // convert size
 function bytesToSize($bytes, $precision = 2)
@@ -120,6 +131,58 @@ function bytesToSize($bytes, $precision = 2)
         return round($bytes / $terabyte, $precision) . ' TB';
     } else {
         return $bytes . ' B';
+    }
+}
+
+//Time ago
+$usertgl = mysqli_query($conn, "SELECT tgl_upload FROM files WHERE id_user = $id_user ORDER BY tgl_upload DESC");
+$rowtgl = mysqli_fetch_assoc($usertgl);
+$tgl_upload = $rowtgl['tgl_upload'];
+
+function timeago($waktu_upload)
+{
+    $waktu_yang_lalu = strtotime($waktu_upload);
+    $waktu_sekarang  = time();
+    $perbedaan_waktu = $waktu_sekarang - $waktu_yang_lalu;
+    $seconds = $perbedaan_waktu;
+    $minutes = round($seconds / 60);
+    $hours   = round($seconds / 3600);
+    $days    = round($seconds / 86400);
+    $weeks   = round($seconds / 604800);
+    $months  = round($seconds / 2419200);
+
+    if ($seconds < 60) {
+        return "$seconds seconds ago";
+    } elseif ($minutes < 60) {
+        if ($minutes == 1) {
+            return "A minutes ago";
+        } else {
+            return "$minutes minutes ago";
+        }
+    } elseif ($hours <= 24) {
+        if ($hours == 1) {
+            return "An hour ago";
+        } else {
+            return "$hours hours ago";
+        }
+    } elseif ($days < 7) {
+        if ($days == 1) {
+            return "Yesterday";
+        } else {
+            return "$days days ago";
+        }
+    } elseif ($weeks < 4) {
+        if ($weeks == 1) {
+            return "Last week";
+        } else {
+            return "$weeks weeks ago";
+        }
+    } else {
+        if ($months == 1) {
+            return "Last month";
+        } else {
+            return "$months months ago";
+        }
     }
 }
 ?>
@@ -189,6 +252,7 @@ function bytesToSize($bytes, $precision = 2)
 
     <!-- Progress bar -->
     <div class="container">
+        <?php if (!empty($_FILES["myfile"])) echo $notenough; ?>
         <div class="row">
             <div class="col">
                 <div class="card mb-3" style="max-width: 540px;">
@@ -200,6 +264,7 @@ function bytesToSize($bytes, $precision = 2)
                             <div class="card-body">
                                 <h5 class="card-title"><?= $user; ?></h5>
                                 <p class="card-text">Joined on : <?= $tgl; ?></p>
+                                <p class="card-text">Last uploading : <?= timeago($tgl_upload); ?> </p>
                             </div>
                         </div>
                     </div>
@@ -210,7 +275,7 @@ function bytesToSize($bytes, $precision = 2)
                 <div class="progress">
                     <div class="progress-bar bg-<?= $color; ?>" role="progressbar" style="width: <?= $percent; ?>%" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100"></div>
                 </div>
-                <p>Your storage = <?= bytesToSize($size); ?> / 500 MB</p>
+                <p>Your storage = <?= bytesToSize($sizefiles); ?> / 500 MB</p>
             </div>
         </div>
     </div>
